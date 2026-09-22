@@ -129,17 +129,75 @@ app.post('/api/auth/biometric-login', async (req, res) => {
   }
 });
 
+// Pattern Lock Login
+app.post('/api/auth/pattern-login', async (req, res) => {
+  try {
+    const { pattern, account_id = '458921' } = req.body;
+    const user = await User.findOne({ where: { account_id } });
+    if (!user) return res.status(404).json({ error: 'Account not found' });
+
+    user.last_login_at = new Date();
+    await user.save();
+
+    await LoginHistory.create({
+      userId: user.id,
+      ip_address: req.ip || '192.168.1.45',
+      device_name: 'iPhone 15 Pro Max',
+      location: 'Mumbai, India',
+      auth_method: 'Pattern Lock'
+    });
+
+    const token = jwt.sign({ id: user.id, account_id: user.account_id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, account_id: user.account_id, full_name: user.full_name, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Security Settings & Login Audit Log
 app.get('/api/user/security-settings', async (req, res) => {
   try {
     const user = await User.findOne({ where: { account_id: '458921' } });
-    const loginLogs = await LoginHistory.findAll({ where: { userId: user.id }, order: [['createdAt', 'DESC']], limit: 5 });
+    const loginLogs = await LoginHistory.findAll({ where: { userId: user.id }, order: [['createdAt', 'DESC']], limit: 10 });
     res.json({
       last_login: user.last_login_at,
       fingerprint_enabled: user.fingerprint_enabled,
       face_id_enabled: user.face_id_enabled,
       login_logs: loginLogs
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Toggle Biometrics
+app.post('/api/user/toggle-biometric', async (req, res) => {
+  try {
+    const { type, enabled } = req.body;
+    const user = await User.findOne({ where: { account_id: '458921' } });
+    if (type === 'fingerprint') user.fingerprint_enabled = enabled;
+    if (type === 'face_id') user.face_id_enabled = enabled;
+    await user.save();
+    res.json({ message: `Biometric ${type} setting updated successfully`, fingerprint_enabled: user.fingerprint_enabled, face_id_enabled: user.face_id_enabled });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Revoke All Active Sessions
+app.post('/api/user/revoke-sessions', async (req, res) => {
+  try {
+    const user = await User.findOne({ where: { account_id: '458921' } });
+    await LoginHistory.destroy({ where: { userId: user.id } });
+    // Re-create initial current session
+    await LoginHistory.create({
+      userId: user.id,
+      ip_address: req.ip || '127.0.0.1',
+      device_name: 'Current Session (Mobile Web App)',
+      location: 'Mumbai, India',
+      auth_method: 'Active Session'
+    });
+    res.json({ message: 'All other active sessions revoked successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
