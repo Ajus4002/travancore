@@ -78,21 +78,32 @@ let sequelize;
 if (process.env.DB_NAME && process.env.DB_USER) {
   autoStartPostgres();
 
-  sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD || '',
-    {
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 5432,
-      dialect: 'postgres',
-      logging: false,
-      pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
-      retry: {
-        max: 3
+  const pgDataPath = path.join(__dirname, '../../pgdata');
+  const socketFile = path.join(pgDataPath, '.s.PGSQL.5432');
+  const isSocketConfigured = process.env.DB_HOST && process.env.DB_HOST.startsWith('/');
+
+  if (!isSocketConfigured || fs.existsSync(socketFile)) {
+    sequelize = new Sequelize(
+      process.env.DB_NAME,
+      process.env.DB_USER,
+      process.env.DB_PASSWORD || '',
+      {
+        host: process.env.DB_HOST || 'localhost',
+        port: process.env.DB_PORT || 5432,
+        dialect: 'postgres',
+        logging: false,
+        pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
+        retry: { max: 3 }
       }
-    }
-  );
+    );
+  } else {
+    console.log(`[Database Notice] PostgreSQL socket not found at ${socketFile}. Falling back to SQLite database at ${sqlitePath}`);
+    sequelize = new Sequelize({
+      dialect: 'sqlite',
+      storage: sqlitePath,
+      logging: false
+    });
+  }
 } else {
   console.log(`[Database] Using SQLite local database at ${sqlitePath}`);
   sequelize = new Sequelize({
