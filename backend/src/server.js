@@ -217,6 +217,95 @@ app.post('/api/user/change-pin', async (req, res) => {
   }
 });
 
+// ================= ONBOARDING & ACCOUNT CREATION (MODULE 3) =================
+
+app.get('/api/onboarding/status', async (req, res) => {
+  try {
+    const user = await User.findOne({ where: { account_id: '458921' } });
+    let onboarding = await OnboardingDetails.findOne({ where: { userId: user.id } });
+    let bank = await BankAccount.findOne({ where: { userId: user.id, is_primary: true } });
+    let setup = await UserTradingSetup.findOne({ where: { userId: user.id } });
+
+    res.json({
+      user: { full_name: user.full_name, email: user.email, mobile_number: user.mobile_number, is_kyc_verified: user.is_kyc_verified },
+      onboarding,
+      bank,
+      setup
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/onboarding/submit', async (req, res) => {
+  try {
+    const {
+      fullName, dob, gender, mobile, email,
+      pan, aadhaar, address, city, state, pincode,
+      occupation, income, experience, risk, objective,
+      accountName, accountNumber, ifsc, bankName,
+      packageType, markets, stepCompleted = 7
+    } = req.body;
+
+    const user = await User.findOne({ where: { account_id: '458921' } });
+    if (fullName) user.full_name = fullName;
+    if (email) user.email = email;
+    if (mobile) user.mobile_number = mobile;
+    user.is_kyc_verified = true;
+    await user.save();
+
+    let onboarding = await OnboardingDetails.findOne({ where: { userId: user.id } });
+    if (!onboarding) {
+      onboarding = await OnboardingDetails.create({ userId: user.id });
+    }
+    await onboarding.update({
+      dob, gender, pan_number: pan, aadhaar_number: aadhaar,
+      address, city, state, pincode, occupation, income_range: income,
+      experience, risk_profile: risk, investment_objective: objective,
+      step_completed: stepCompleted, status: 'APPROVED'
+    });
+
+    let bank = await BankAccount.findOne({ where: { userId: user.id, is_primary: true } });
+    if (!bank) {
+      bank = await BankAccount.create({ userId: user.id, is_primary: true });
+    }
+    await bank.update({
+      account_holder_name: accountName || fullName,
+      account_number: accountNumber ? accountNumber.slice(-4) : '4567',
+      full_account_number: accountNumber,
+      ifsc_code: ifsc,
+      bank_name: bankName || 'HDFC Bank'
+    });
+
+    let setup = await UserTradingSetup.findOne({ where: { userId: user.id } });
+    if (!setup) {
+      setup = await UserTradingSetup.create({ userId: user.id });
+    }
+    const returnRange = packageType === 'CAPITAL_PROTECT' ? '20% - 30%' : packageType === 'AGGRESSIVE' ? '50% - 70%' : '30% - 60%';
+    await setup.update({
+      package_type: packageType || 'BALANCED',
+      package_return_range: returnRange,
+      markets: markets || ['Indian Markets', 'Commodity Markets', 'Crypto Markets']
+    });
+
+    res.json({
+      message: 'Onboarding step submitted successfully!',
+      status: 'APPROVED',
+      stepCompleted
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/onboarding/upload-kyc', (req, res) => {
+  res.json({
+    message: 'KYC Document uploaded and verified successfully!',
+    document_url: '/uploads/pan_card_verified.pdf',
+    verification_status: 'VERIFIED'
+  });
+});
+
 // ================= DASHBOARD & ALGO TRADING (MODULE 3 & 4) =================
 
 app.get('/api/dashboard/summary', async (req, res) => {
