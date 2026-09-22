@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Database & Logs
+backend/pgdata/
+backend/travancore_dev.sqlite
+*.log
+*.sqlite
+
+# Environment variables
+.env
+.env.local
+
+# Build outputs
+dist/
+build/
+.next/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
