@@ -1,5 +1,5 @@
 import React from 'react';
-import { Gift, LineChart, ShieldCheck, UserCheck, HelpCircle, Bell, LogOut, ChevronRight, Cpu } from 'lucide-react';
+import { Gift, LineChart, ShieldCheck, UserCheck, HelpCircle, Bell, LogOut, ChevronRight, Cpu, ShieldAlert } from 'lucide-react';
 
 export default function MoreMenu({ onNavigate, user = { full_name: 'Sachin Tendulkar', account_id: '458921' } }) {
   const menuItems = [
@@ -9,7 +9,8 @@ export default function MoreMenu({ onNavigate, user = { full_name: 'Sachin Tendu
     { id: 'security', title: 'Account Security Settings', sub: 'PIN, Biometrics, Audit log & Trusted devices', icon: ShieldCheck, color: '#003366' },
     { id: 'onboarding', title: 'Trading Package & Markets', sub: 'Modify package risk profile & market selections', icon: UserCheck, color: '#6366F1' },
     { id: 'support', title: 'Help & 24x7 Live Chat Support', sub: 'Instant assistant, tickets & toll-free support', icon: HelpCircle, color: '#0047AB' },
-    { id: 'notifications', title: 'Notifications Center', sub: 'Real-time order execution & funds alerts', icon: Bell, color: '#EF4444' }
+    { id: 'notifications', title: 'Notifications Center', sub: 'Real-time order execution & funds alerts', icon: Bell, color: '#EF4444' },
+    { id: 'admin', title: 'Admin Master Control Panel', sub: 'Risk management, emergency kill switch & KYC directory', icon: ShieldAlert, color: '#D4AF37' }
   ];
 
   return (
