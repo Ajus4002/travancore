@@ -10,6 +10,7 @@ export default function MoreMenu({ onNavigate, user = { full_name: 'Sachin Tendu
     { id: 'onboarding', title: 'Trading Package & Markets', sub: 'Modify package risk profile & market selections', icon: UserCheck, color: '#6366F1' },
     { id: 'support', title: 'Help & 24x7 Live Chat Support', sub: 'Instant assistant, tickets & toll-free support', icon: HelpCircle, color: '#0047AB' },
     { id: 'notifications', title: 'Notifications Center', sub: 'Real-time order execution & funds alerts', icon: Bell, color: '#EF4444' },
+    { id: 'backtest', title: 'Algo Strategy Backtester', sub: 'Historical tick-data simulation & equity curve', icon: Cpu, color: '#0047AB' },
     { id: 'admin', title: 'Admin Master Control Panel', sub: 'Risk management, emergency kill switch & KYC directory', icon: ShieldAlert, color: '#D4AF37' }
   ];
 

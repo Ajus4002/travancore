@@ -14,9 +14,10 @@ import SecuritySettings from './pages/SecuritySettings';
 import SupportNotifications from './pages/SupportNotifications';
 import MoreMenu from './pages/MoreMenu';
 import AdminPanel from './pages/AdminPanel';
+import AlgoBacktester from './pages/AlgoBacktester';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('home'); // 'login', 'onboarding', 'home', 'markets', 'algo', 'funds', 'pnl', 'referrals', 'research', 'security', 'support', 'notifications', 'more', 'admin'
+  const [currentView, setCurrentView] = useState('home'); // 'login', 'onboarding', 'home', 'markets', 'algo', 'funds', 'pnl', 'referrals', 'research', 'security', 'support', 'notifications', 'more', 'admin', 'backtest'
   const [currentUser, setCurrentUser] = useState({ full_name: 'Sachin Tendulkar', account_id: '458921' });
 
   const handleLoginSuccess = (userData) => {
@@ -52,6 +53,7 @@ export default function App() {
         {currentView === 'notifications' && <SupportNotifications initialView="NOTIFICATIONS" onNavigate={(target) => setCurrentView(target)} />}
         {currentView === 'more' && <MoreMenu user={currentUser} onNavigate={(target) => setCurrentView(target)} />}
         {currentView === 'admin' && <AdminPanel onNavigate={(target) => setCurrentView(target)} />}
+        {currentView === 'backtest' && <AlgoBacktester onNavigate={(target) => setCurrentView(target)} />}
       </main>
 
       {/* Mobile Sticky Bottom Navigation Bar */}
