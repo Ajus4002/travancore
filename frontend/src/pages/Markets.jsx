@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, TrendingUp, TrendingDown, Clock, ShieldCheck, X, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, TrendingUp, TrendingDown, Clock, ShieldCheck, X, CheckCircle2, BarChart2 } from 'lucide-react';
+import ChartModal from '../components/ChartModal';
 
 export default function Markets({ onNavigate }) {
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInstrument, setSelectedInstrument] = useState(null);
+  const [chartInstrument, setChartInstrument] = useState(null);
   const [orderModal, setOrderModal] = useState(false);
   const [orderType, setOrderType] = useState('BUY'); // BUY or SELL
   const [orderMode, setOrderMode] = useState('INTRADAY'); // INTRADAY or DELIVERY
@@ -168,6 +170,13 @@ export default function Markets({ onNavigate }) {
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
                 <button 
+                  onClick={() => setChartInstrument(item)}
+                  style={{ background: '#F1F5F9', color: '#0047AB', border: '1px solid #CBD5E1', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                >
+                  <BarChart2 size={12} />
+                  <span>Chart</span>
+                </button>
+                <button 
                   onClick={() => handleOpenOrder(item, 'BUY')}
                   style={{ background: '#10B981', color: '#FFFFFF', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}
                 >
@@ -326,6 +335,15 @@ export default function Markets({ onNavigate }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Interactive Candlestick Chart Modal */}
+      {chartInstrument && (
+        <ChartModal 
+          instrument={chartInstrument} 
+          onClose={() => setChartInstrument(null)}
+          onPlaceOrder={(inst, side) => handleOpenOrder(inst, side)}
+        />
       )}
 
     </div>
