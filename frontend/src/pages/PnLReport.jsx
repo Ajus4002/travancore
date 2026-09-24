@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, Share2, Calendar, TrendingUp, Cpu, PieChart as PieIcon, FileSpreadsheet, FileText, Mail, CheckCircle2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { downloadCSV, generatePnLStatementCSV, generateTaxReportCSV } from '../utils/ExportUtility';
 
 export default function PnLReport({ onNavigate }) {
   const [timeFilter, setTimeFilter] = useState('MONTHLY');
@@ -28,6 +29,17 @@ export default function PnLReport({ onNavigate }) {
   ];
 
   const handleExportAction = (type) => {
+    if (type === 'PDF P&L Statement') {
+      const csv = generatePnLStatementCSV(tradeHistory, { total_investment: 500000, current_value: 538750, net_pnl: 48625, roi: '+9.73%', win_rate: '75.0%' });
+      downloadCSV('Travancore_PnL_Statement_2026.csv', csv);
+    } else if (type === 'Excel Trade Log') {
+      const csv = generatePnLStatementCSV(tradeHistory, { total_investment: 500000, current_value: 538750, net_pnl: 48625, roi: '+9.73%', win_rate: '75.0%' });
+      downloadCSV('Travancore_Trade_History_Log.csv', csv);
+    } else if (type === 'Tax Summary Report') {
+      const csv = generateTaxReportCSV(tradeHistory);
+      downloadCSV('Travancore_Tax_Summary_FY2026.csv', csv);
+    }
+
     setExportSuccess(type);
     setTimeout(() => {
       setExportSuccess('');
