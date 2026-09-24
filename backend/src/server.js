@@ -515,6 +515,69 @@ app.get('/api/notifications', async (req, res) => {
   }
 });
 
+// ================= REAL-TIME SSE TICKER STREAM (MODULE 12) =================
+
+app.get('/api/stream/market-ticks', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders && res.flushHeaders();
+
+  const sendTicks = async () => {
+    try {
+      const instruments = await MarketInstrument.findAll();
+      const updatedTicks = instruments.map(inst => {
+        const deltaPercent = (Math.random() * 0.4 - 0.2); // -0.2% to +0.2%
+        const newLtp = parseFloat((inst.ltp * (1 + deltaPercent / 100)).toFixed(2));
+        const newChangeAmt = parseFloat((inst.change_amount + (newLtp - inst.ltp)).toFixed(2));
+        const newChangePct = parseFloat(((newChangeAmt / (newLtp - newChangeAmt)) * 100).toFixed(2));
+        return {
+          id: inst.id,
+          symbol: inst.symbol,
+          ltp: newLtp,
+          change_amount: newChangeAmt,
+          change_percent: newChangePct,
+          updated_at: new Date().toISOString()
+        };
+      });
+
+      res.write(`data: ${JSON.stringify(updatedTicks)}\n\n`);
+    } catch (e) {}
+  };
+
+  const intervalId = setInterval(sendTicks, 2000);
+  sendTicks();
+
+  req.on('close', () => {
+    clearInterval(intervalId);
+  });
+});
+
+// Live Algo Simulation Step Trigger
+app.post('/api/algo/simulate-trade', async (req, res) => {
+  try {
+    const user = await User.findOne({ where: { account_id: '458921' } });
+    const symbols = ['NIFTY 12 SEP 25000 CE', 'BANKNIFTY 12 SEP 51300 PE', 'RELIANCE', 'GOLD OCT FUT', 'BTC/USDT'];
+    const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+    const pnlDelta = Math.floor(Math.random() * 1500 - 400);
+
+    const position = await Position.create({
+      userId: user.id,
+      symbol: randomSymbol,
+      product_type: 'ALGO BUY',
+      quantity: Math.floor(Math.random() * 50) + 10,
+      average_buy_price: 150.00,
+      last_traded_price: 150.00 + (pnlDelta / 20),
+      unrealized_pnl: pnlDelta,
+      is_open: true
+    });
+
+    res.json({ message: 'Simulated live algo trade executed', position });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Init DB & Seed
 async function startServer() {
   try {

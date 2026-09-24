@@ -1,8 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from './Logo';
 import { Bell, User, ChevronDown } from 'lucide-react';
 
 export default function Header({ user = { full_name: 'Sachin Tendulkar', account_id: '458921' }, onNavChange }) {
+  const [tickers, setTickers] = useState({
+    nifty: { ltp: 25017.35, change: 162.40, pct: 0.65 },
+    sensex: { ltp: 81697.76, change: 520.90, pct: 0.64 },
+    banknifty: { ltp: 51328.45, change: 310.25, pct: 0.61 }
+  });
+
+  useEffect(() => {
+    let eventSource;
+    try {
+      eventSource = new EventSource('/api/stream/market-ticks');
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const n = data.find(t => t.symbol === 'NIFTY 50');
+        const s = data.find(t => t.symbol === 'SENSEX');
+        const b = data.find(t => t.symbol === 'BANK NIFTY');
+
+        setTickers(prev => ({
+          nifty: n ? { ltp: n.ltp, change: n.change_amount, pct: n.change_percent } : prev.nifty,
+          sensex: s ? { ltp: s.ltp, change: s.change_amount, pct: s.change_percent } : prev.sensex,
+          banknifty: b ? { ltp: b.ltp, change: b.change_amount, pct: b.change_percent } : prev.banknifty
+        }));
+      };
+    } catch (e) {}
+
+    // Interval fallback simulation if SSE offline
+    const interval = setInterval(() => {
+      setTickers(prev => ({
+        nifty: { ...prev.nifty, ltp: parseFloat((prev.nifty.ltp + (Math.random() * 4 - 2)).toFixed(2)) },
+        sensex: { ...prev.sensex, ltp: parseFloat((prev.sensex.ltp + (Math.random() * 8 - 4)).toFixed(2)) },
+        banknifty: { ...prev.banknifty, ltp: parseFloat((prev.banknifty.ltp + (Math.random() * 6 - 3)).toFixed(2)) }
+      }));
+    }, 2500);
+
+    return () => {
+      if (eventSource) eventSource.close();
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <header style={{
       background: 'linear-gradient(180deg, #002B55 0%, #003366 100%)',
@@ -106,22 +145,28 @@ export default function Header({ user = { full_name: 'Sachin Tendulkar', account
       }}>
         <div style={{ flexShrink: 0 }}>
           <span style={{ color: '#94A3B8' }}>NIFTY 50: </span>
-          <span style={{ fontWeight: '700', color: '#FFFFFF' }}>25,017.35 </span>
-          <span style={{ color: '#10B981', fontWeight: '700' }}>▲ +162.40 (+0.65%)</span>
+          <span style={{ fontWeight: '700', color: '#FFFFFF' }}>{tickers.nifty.ltp.toLocaleString()} </span>
+          <span style={{ color: tickers.nifty.change >= 0 ? '#10B981' : '#EF4444', fontWeight: '700' }}>
+            {tickers.nifty.change >= 0 ? '▲ +' : '▼ '}{tickers.nifty.change} ({tickers.nifty.pct >= 0 ? '+' : ''}{tickers.nifty.pct}%)
+          </span>
         </div>
         <div style={{ flexShrink: 0 }}>
           <span style={{ color: '#94A3B8' }}>SENSEX: </span>
-          <span style={{ fontWeight: '700', color: '#FFFFFF' }}>81,697.76 </span>
-          <span style={{ color: '#10B981', fontWeight: '700' }}>▲ +520.90 (+0.64%)</span>
+          <span style={{ fontWeight: '700', color: '#FFFFFF' }}>{tickers.sensex.ltp.toLocaleString()} </span>
+          <span style={{ color: tickers.sensex.change >= 0 ? '#10B981' : '#EF4444', fontWeight: '700' }}>
+            {tickers.sensex.change >= 0 ? '▲ +' : '▼ '}{tickers.sensex.change} ({tickers.sensex.pct >= 0 ? '+' : ''}{tickers.sensex.pct}%)
+          </span>
         </div>
         <div style={{ flexShrink: 0 }}>
           <span style={{ color: '#94A3B8' }}>BANK NIFTY: </span>
-          <span style={{ fontWeight: '700', color: '#FFFFFF' }}>51,328.45 </span>
-          <span style={{ color: '#10B981', fontWeight: '700' }}>▲ +310.25 (+0.61%)</span>
+          <span style={{ fontWeight: '700', color: '#FFFFFF' }}>{tickers.banknifty.ltp.toLocaleString()} </span>
+          <span style={{ color: tickers.banknifty.change >= 0 ? '#10B981' : '#EF4444', fontWeight: '700' }}>
+            {tickers.banknifty.change >= 0 ? '▲ +' : '▼ '}{tickers.banknifty.change} ({tickers.banknifty.pct >= 0 ? '+' : ''}{tickers.banknifty.pct}%)
+          </span>
         </div>
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.2)', padding: '2px 8px', borderRadius: '12px' }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }}></span>
-          <span style={{ color: '#10B981', fontWeight: '700', fontSize: '10px' }}>Market Open</span>
+          <span style={{ color: '#10B981', fontWeight: '700', fontSize: '10px' }}>Market Live Stream</span>
         </div>
       </div>
     </header>
