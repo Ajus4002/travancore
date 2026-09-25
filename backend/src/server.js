@@ -684,8 +684,7 @@ async function startServer() {
     await sequelize.sync();
     console.log('[Express] PostgreSQL Database synced successfully.');
   } catch (err) {
-    console.log('[Database Notice] Could not connect to PostgreSQL. PostgreSQL service can be started with `npm run pg:start`.');
-    console.log('[Express] Server starting with fallback local SQLite database...');
+    console.error('[Express Database Error] PostgreSQL sync error:', err.message);
   }
 
   try {

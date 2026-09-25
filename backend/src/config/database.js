@@ -2,115 +2,96 @@ const { Sequelize } = require('sequelize');
 const path = require('path');
 const { execSync } = require('child_process');
 const fs = require('fs');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 require('dotenv').config();
 
-const sqlitePath = path.join(__dirname, '../../travancore_dev.sqlite');
+const pgDataPath = path.join(__dirname, '../../pgdata');
+const socketFile = path.join(pgDataPath, '.s.PGSQL.5432');
 
-function autoStartPostgres() {
-  const pgDataPath = path.join(__dirname, '../../pgdata');
-  if (!fs.existsSync(pgDataPath)) return;
-
-  const socketFile = path.join(pgDataPath, '.s.PGSQL.5432');
-  const pgCtlPaths = [
-    '/usr/lib/postgresql/16/bin/pg_ctl',
-    '/usr/lib/postgresql/15/bin/pg_ctl',
-    'pg_ctl'
-  ];
-
-  let pgCtl = pgCtlPaths.find(p => {
-    try {
-      if (p.startsWith('/')) return fs.existsSync(p);
-      execSync('which pg_ctl 2>/dev/null');
-      return true;
-    } catch {
-      return false;
-    }
-  }) || 'pg_ctl';
-
-  let isRunning = false;
+function probeSocketSync(socketPath) {
+  if (!fs.existsSync(socketPath)) return false;
   try {
-    const status = execSync(`${pgCtl} -D "${pgDataPath}" status`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
-    if (status.includes('server is running')) {
-      isRunning = true;
-    }
+    execSync(`python3 -c "import socket, sys; s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM); s.settimeout(0.5); s.connect('${socketPath}'); sys.exit(0)" 2>/dev/null`, { stdio: 'pipe' });
+    return true;
   } catch (e) {
-    if (e.stdout && e.stdout.includes('server is running')) {
-      isRunning = true;
-    }
+    return false;
   }
+}
 
-  if (isRunning) {
+function ensurePostgresRunning() {
+  if (!fs.existsSync(pgDataPath)) {
+    console.error(`[Database Error] PostgreSQL data directory does not exist at ${pgDataPath}`);
     return;
   }
 
-  // PostgreSQL is not running: clean up stale socket and pid files if any exist
-  try {
-    if (fs.existsSync(path.join(pgDataPath, 'postmaster.pid'))) {
-      fs.unlinkSync(path.join(pgDataPath, 'postmaster.pid'));
-    }
-    if (fs.existsSync(socketFile)) {
-      fs.unlinkSync(socketFile);
-    }
-    if (fs.existsSync(socketFile + '.lock')) {
-      fs.unlinkSync(socketFile + '.lock');
-    }
-  } catch (e) {
-    // Ignore cleanup errors
+  // 1. Synchronously probe Unix socket
+  if (probeSocketSync(socketFile)) {
+    return; // PostgreSQL is active and accepting connections
   }
 
-  try {
-    execSync(`${pgCtl} -D "${pgDataPath}" -o "-k ${pgDataPath} -p 5432" -l "${pgDataPath}/postgres.log" start`, { stdio: 'ignore' });
-  } catch (e) {
-    // Ignore background start errors
-  }
+  console.log('[Database] PostgreSQL is not running. Launching PostgreSQL cluster...');
 
-  // Wait up to 3 seconds for socket file to appear
-  for (let i = 0; i < 15; i++) {
-    if (fs.existsSync(socketFile)) break;
+  const pgctl = fs.existsSync('/usr/lib/postgresql/16/bin/pg_ctl') 
+    ? '/usr/lib/postgresql/16/bin/pg_ctl'
+    : fs.existsSync('/usr/lib/postgresql/15/bin/pg_ctl')
+    ? '/usr/lib/postgresql/15/bin/pg_ctl'
+    : 'pg_ctl';
+
+  // 2. Stop lingering processes and force-remove all stale lock files
+  try {
+    execSync(`"${pgctl}" -D "${pgDataPath}" stop -m immediate 2>/dev/null`, { stdio: 'pipe' });
+  } catch (e) {}
+
+  fs.rmSync(path.join(pgDataPath, 'postmaster.pid'), { force: true });
+  fs.rmSync(socketFile, { force: true });
+  fs.rmSync(socketFile + '.lock', { force: true });
+  fs.rmSync('/tmp/.s.PGSQL.5432', { force: true });
+  fs.rmSync('/tmp/.s.PGSQL.5432.lock', { force: true });
+
+  // 3. Start PostgreSQL with socket-only binding (-h '')
+  try {
+    execSync(`"${pgctl}" -D "${pgDataPath}" -o "-h '' -k ${pgDataPath} -p 5432" -l "${pgDataPath}/postgres.log" start`, { stdio: 'pipe' });
+  } catch (e) {
     try {
-      execSync('sleep 0.2');
-    } catch {}
+      execSync(`nohup /usr/lib/postgresql/16/bin/postgres -D "${pgDataPath}" -h "" -k "${pgDataPath}" -p 5432 > "${pgDataPath}/postgres.log" 2>&1 &`, { stdio: 'ignore' });
+    } catch (err) {}
   }
-}
 
-let sequelize;
+  // 4. Loop wait up to 5 seconds for PostgreSQL socket to accept connections
+  let connected = false;
+  for (let i = 0; i < 25; i++) {
+    if (probeSocketSync(socketFile)) {
+      connected = true;
+      break;
+    }
+    try { execSync('sleep 0.2'); } catch {}
+  }
 
-if (process.env.DB_NAME && process.env.DB_USER) {
-  autoStartPostgres();
-
-  const pgDataPath = path.join(__dirname, '../../pgdata');
-  const socketFile = path.join(pgDataPath, '.s.PGSQL.5432');
-  const isSocketConfigured = process.env.DB_HOST && process.env.DB_HOST.startsWith('/');
-
-  if (!isSocketConfigured || fs.existsSync(socketFile)) {
-    sequelize = new Sequelize(
-      process.env.DB_NAME,
-      process.env.DB_USER,
-      process.env.DB_PASSWORD || '',
-      {
-        host: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 5432,
-        dialect: 'postgres',
-        logging: false,
-        pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
-        retry: { max: 3 }
-      }
-    );
+  if (connected) {
+    console.log('[Database] PostgreSQL engine started and ready!');
   } else {
-    console.log(`[Database Notice] PostgreSQL socket not found at ${socketFile}. Falling back to SQLite database at ${sqlitePath}`);
-    sequelize = new Sequelize({
-      dialect: 'sqlite',
-      storage: sqlitePath,
-      logging: false
-    });
+    console.error('[Database Error] Failed to start PostgreSQL engine after 5 seconds.');
   }
-} else {
-  console.log(`[Database] Using SQLite local database at ${sqlitePath}`);
-  sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: sqlitePath,
-    logging: false
-  });
 }
+
+// Guarantee PostgreSQL server is running before Sequelize exports
+ensurePostgresRunning();
+
+const dbName = process.env.DB_NAME || 'travancore_db';
+const dbUser = process.env.DB_USER || 'aju';
+const dbPassword = process.env.DB_PASSWORD || 'postgres';
+const dbHost = (process.env.DB_HOST && process.env.DB_HOST.startsWith('/')) ? process.env.DB_HOST : pgDataPath;
+const dbPort = process.env.DB_PORT || 5432;
+
+console.log(`[Database] Connecting exclusively to PostgreSQL database '${dbName}' at socket path ${dbHost}...`);
+
+const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
+  host: dbHost,
+  port: dbPort,
+  dialect: 'postgres',
+  logging: false,
+  pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+  retry: { max: 5 }
+});
 
 module.exports = sequelize;
