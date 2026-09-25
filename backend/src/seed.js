@@ -20,67 +20,167 @@ async function seedDatabase() {
     console.log('[Seed] Syncing database models...');
     await sequelize.sync({ force: true });
 
-    console.log('[Seed] Creating demo user Sachin Tendulkar (458921)...');
+    console.log('[Seed] Creating dummy trading users...');
     const passwordHash = await bcrypt.hash('password123', 10);
-    const pinHash = await bcrypt.hash('123456', 10);
+    const pinHash1 = await bcrypt.hash('123456', 10);
+    const pinHash2 = await bcrypt.hash('654321', 10);
+    const pinHash3 = await bcrypt.hash('777777', 10);
+    const pinHash4 = await bcrypt.hash('454545', 10);
+    const pinHash5 = await bcrypt.hash('101010', 10);
     const patternHash = await bcrypt.hash('1-2-3-6-9', 10);
 
-    const demoUser = await User.create({
-      account_id: '458921',
-      full_name: 'Sachin Tendulkar',
-      email: 'sachin@travancore.com',
-      mobile_number: '+91 9876543210',
-      password_hash: passwordHash,
-      pin_hash: pinHash,
-      pattern_hash: patternHash,
-      fingerprint_enabled: true,
-      face_id_enabled: true,
-      is_kyc_verified: true,
-      referral_code: 'ST1234',
-      last_login_at: new Date()
-    });
+    const usersData = [
+      {
+        account_id: '458921',
+        full_name: 'Sachin Tendulkar',
+        email: 'sachin@travancore.com',
+        mobile_number: '+91 9876543210',
+        password_hash: passwordHash,
+        pin_hash: pinHash1,
+        pattern_hash: patternHash,
+        referral_code: 'ST1234',
+        onboarding: { dob: '24/04/1973', gender: 'Male', pan: 'ABCDE1234F', aadhaar: 'XXXX-XXXX-9012', address: 'Bandra West, Sea Face View', city: 'Mumbai', state: 'Maharashtra', pincode: '400050', occupation: 'Business / Professional', income: '> ₹25 Lakhs', experience: 'Expert', risk: 'Balanced', objective: 'Growth & Income' },
+        bank: { name: 'HDFC Bank', number: '4567', full_number: '91801004567', ifsc: 'HDFC0001234' },
+        setup: { package: 'BALANCED', return_range: '30% - 60%', investment: 500000.0, current: 538750.0, realized: 27850.0, unrealized: 10900.0 }
+      },
+      {
+        account_id: '458922',
+        full_name: 'Virat Kohli',
+        email: 'virat@travancore.com',
+        mobile_number: '+91 9876543211',
+        password_hash: passwordHash,
+        pin_hash: pinHash2,
+        pattern_hash: patternHash,
+        referral_code: 'VK1818',
+        onboarding: { dob: '05/11/1988', gender: 'Male', pan: 'VKOPL5678G', aadhaar: 'XXXX-XXXX-1818', address: 'Worli Skyline Towers', city: 'Mumbai', state: 'Maharashtra', pincode: '400018', occupation: 'Professional Athlete', income: '> ₹25 Lakhs', experience: 'Intermediate', risk: 'High', objective: 'Aggressive Capital Growth' },
+        bank: { name: 'ICICI Bank', number: '1818', full_number: '91801001818', ifsc: 'ICIC0001818' },
+        setup: { package: 'AGGRESSIVE', return_range: '50% - 70%', investment: 1000000.0, current: 1185000.0, realized: 185000.0, unrealized: 45000.0 }
+      },
+      {
+        account_id: '458923',
+        full_name: 'MS Dhoni',
+        email: 'dhoni@travancore.com',
+        mobile_number: '+91 9876543212',
+        password_hash: passwordHash,
+        pin_hash: pinHash3,
+        pattern_hash: patternHash,
+        referral_code: 'MSD007',
+        onboarding: { dob: '07/07/1981', gender: 'Male', pan: 'MSDPH0007K', aadhaar: 'XXXX-XXXX-0007', address: 'Ranchi Farmhouse Estate', city: 'Ranchi', state: 'Jharkhand', pincode: '834001', occupation: 'Business Owner', income: '> ₹25 Lakhs', experience: 'Expert', risk: 'Capital Protect / Low', objective: 'Wealth Preservation' },
+        bank: { name: 'State Bank of India', number: '0007', full_number: '91801000007', ifsc: 'SBIN0000007' },
+        setup: { package: 'CAPITAL_PROTECT', return_range: '20% - 30%', investment: 2500000.0, current: 2710000.0, realized: 210000.0, unrealized: 35000.0 }
+      },
+      {
+        account_id: '458924',
+        full_name: 'Rohit Sharma',
+        email: 'rohit@travancore.com',
+        mobile_number: '+91 9876543213',
+        password_hash: passwordHash,
+        pin_hash: pinHash4,
+        pattern_hash: patternHash,
+        referral_code: 'RS4545',
+        onboarding: { dob: '30/04/1987', gender: 'Male', pan: 'RSHAR4545M', aadhaar: 'XXXX-XXXX-4545', address: 'Prabhadevi Heights', city: 'Mumbai', state: 'Maharashtra', pincode: '400025', occupation: 'Sports Professional', income: '> ₹25 Lakhs', experience: 'Intermediate', risk: 'Balanced', objective: 'Capital Appreciation' },
+        bank: { name: 'Axis Bank', number: '4545', full_number: '91801004545', ifsc: 'UTIB0004545' },
+        setup: { package: 'BALANCED', return_range: '30% - 60%', investment: 750000.0, current: 815400.0, realized: 65400.0, unrealized: 18200.0 }
+      },
+      {
+        account_id: '458925',
+        full_name: 'Anil Kumble',
+        email: 'anil@travancore.com',
+        mobile_number: '+91 9876543214',
+        password_hash: passwordHash,
+        pin_hash: pinHash5,
+        pattern_hash: patternHash,
+        referral_code: 'AK1010',
+        onboarding: { dob: '17/10/1970', gender: 'Male', pan: 'AKUMB1010N', aadhaar: 'XXXX-XXXX-1010', address: 'Indiranagar Main Road', city: 'Bengaluru', state: 'Karnataka', pincode: '560038', occupation: 'Tech Entrepreneur / Consultant', income: '₹10L - ₹25L', experience: 'Expert', risk: 'Balanced', objective: 'Monthly Income' },
+        bank: { name: 'Canara Bank', number: '1010', full_number: '91801001010', ifsc: 'CNRB0001010' },
+        setup: { package: 'BALANCED', return_range: '30% - 60%', investment: 300000.0, current: 324000.0, realized: 24000.0, unrealized: 6800.0 }
+      }
+    ];
 
-    await OnboardingDetails.create({
-      userId: demoUser.id,
-      dob: '24/04/1973',
-      gender: 'Male',
-      pan_number: 'ABCDE1234F',
-      aadhaar_number: 'XXXX-XXXX-9012',
-      address: 'Bandra West, Sea Face View',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400050',
-      country: 'India',
-      occupation: 'Business / Professional',
-      income_range: '> ₹25 Lakhs',
-      experience: 'Expert',
-      risk_profile: 'Balanced',
-      investment_objective: 'Growth & Income',
-      step_completed: 7,
-      status: 'APPROVED'
-    });
+    for (const u of usersData) {
+      const user = await User.create({
+        account_id: u.account_id,
+        full_name: u.full_name,
+        email: u.email,
+        mobile_number: u.mobile_number,
+        password_hash: u.password_hash,
+        pin_hash: u.pin_hash,
+        pattern_hash: u.pattern_hash,
+        fingerprint_enabled: true,
+        face_id_enabled: true,
+        is_kyc_verified: true,
+        referral_code: u.referral_code,
+        last_login_at: new Date()
+      });
 
-    await BankAccount.create({
-      userId: demoUser.id,
-      account_holder_name: 'Sachin Tendulkar',
-      account_number: '4567',
-      full_account_number: '91801004567',
-      ifsc_code: 'HDFC0001234',
-      bank_name: 'HDFC Bank',
-      is_primary: true
-    });
+      await OnboardingDetails.create({
+        userId: user.id,
+        dob: u.onboarding.dob,
+        gender: u.onboarding.gender,
+        pan_number: u.onboarding.pan,
+        aadhaar_number: u.onboarding.aadhaar,
+        address: u.onboarding.address,
+        city: u.onboarding.city,
+        state: u.onboarding.state,
+        pincode: u.onboarding.pincode,
+        country: 'India',
+        occupation: u.onboarding.occupation,
+        income_range: u.onboarding.income,
+        experience: u.onboarding.experience,
+        risk_profile: u.onboarding.risk,
+        investment_objective: u.onboarding.objective,
+        step_completed: 7,
+        status: 'APPROVED'
+      });
 
-    await UserTradingSetup.create({
-      userId: demoUser.id,
-      package_type: 'BALANCED',
-      package_return_range: '30% - 60%',
-      markets: ['Indian Markets', 'Commodity Markets', 'Crypto Markets'],
-      algo_enabled: true,
-      total_investment: 500000.0,
-      current_value: 538750.0,
-      realized_pnl: 27850.0,
-      unrealized_pnl: 10900.0
-    });
+      await BankAccount.create({
+        userId: user.id,
+        account_holder_name: u.full_name,
+        account_number: u.bank.number,
+        full_account_number: u.bank.full_number,
+        ifsc_code: u.bank.ifsc,
+        bank_name: u.bank.name,
+        is_primary: true
+      });
+
+      await UserTradingSetup.create({
+        userId: user.id,
+        package_type: u.setup.package,
+        package_return_range: u.setup.return_range,
+        markets: ['Indian Markets', 'Commodity Markets', 'Crypto Markets'],
+        algo_enabled: true,
+        total_investment: u.setup.investment,
+        current_value: u.setup.current,
+        realized_pnl: u.setup.realized,
+        unrealized_pnl: u.setup.unrealized
+      });
+
+      await Position.bulkCreate([
+        { userId: user.id, symbol: 'NIFTY 12 SEP 25000 CE', exchange: 'NFO', side: 'BUY', quantity: 50, avg_price: 102.50, ltp: 128.30, pnl_amount: 12900.0, pnl_percent: 25.17, is_algo: true, is_open: true },
+        { userId: user.id, symbol: 'BANKNIFTY 12 SEP 51300 PE', exchange: 'NFO', side: 'SELL', quantity: 25, avg_price: 215.00, ltp: 198.40, pnl_amount: -4150.0, pnl_percent: -7.72, is_algo: true, is_open: true },
+        { userId: user.id, symbol: 'RELIANCE', exchange: 'NSE', side: 'BUY', quantity: 100, avg_price: 2856.00, ltp: 2914.75, pnl_amount: 5875.0, pnl_percent: 2.06, is_algo: true, is_open: true }
+      ]);
+
+      await Transaction.bulkCreate([
+        { userId: user.id, txn_id: 'TRW' + Math.floor(10000000 + Math.random() * 90000000), type: 'WITHDRAWAL', amount: 50000.0, bank_name: u.bank.name, account_masked: '**** ' + u.bank.number, ifsc_code: u.bank.ifsc, status: 'Processing', expected_time: 'Within 1-4 hours' },
+        { userId: user.id, txn_id: 'TRW' + Math.floor(10000000 + Math.random() * 90000000), type: 'WITHDRAWAL', amount: 25000.0, bank_name: u.bank.name, account_masked: '**** ' + u.bank.number, ifsc_code: u.bank.ifsc, status: 'Completed', expected_time: 'Completed' }
+      ]);
+
+      await ReferralRecord.bulkCreate([
+        { userId: user.id, referee_name: 'Anil R', status: 'Active', joined_date: '12 Aug 2024', total_trades: 156, total_profit: 86400.0, earned_amount: 4320.0 },
+        { userId: user.id, referee_name: 'Priya K', status: 'Active', joined_date: '28 Sep 2024', total_trades: 98, total_profit: 57000.0, earned_amount: 2850.0 }
+      ]);
+
+      await LoginHistory.bulkCreate([
+        { userId: user.id, ip_address: '192.168.1.45', device_name: 'iPhone 15 Pro Max', location: 'Mumbai, India', auth_method: 'PIN' },
+        { userId: user.id, ip_address: '103.22.45.12', device_name: 'MacBook Pro Chrome', location: 'Mumbai, India', auth_method: 'Password' }
+      ]);
+
+      await Notification.bulkCreate([
+        { userId: user.id, category: 'Trading', title: 'Order Executed', message: 'NIFTY 12 SEP 25000 CE • BUY 50 @ ₹128.30. Order executed successfully.', is_read: false, time_ago: 'Today at 09:22 AM' },
+        { userId: user.id, category: 'Funds', title: 'Withdrawal Requested', message: `Withdrawal request of ₹50,000 to ${u.bank.name} is processing.`, is_read: false, time_ago: 'Today at 02:35 PM' }
+      ]);
+    }
 
     // Market Instruments (Page 16)
     await MarketInstrument.bulkCreate([
@@ -96,48 +196,6 @@ async function seedDatabase() {
       { symbol: 'BITCOIN', name: 'Bitcoin (BTC/USD)', category: 'CRYPTO', exchange: 'CRYPTO', ltp: 58421.35, change_amount: 1245.60, change_percent: 2.18, trading_hours: '24x7', trading_days: 'All 7 Days', currency_symbol: '$' },
       { symbol: 'ETHEREUM', name: 'Ethereum (ETH/USD)', category: 'CRYPTO', exchange: 'CRYPTO', ltp: 2432.10, change_amount: 38.45, change_percent: 1.61, trading_hours: '24x7', trading_days: 'All 7 Days', currency_symbol: '$' },
       { symbol: 'SOLANA', name: 'Solana (SOL/USD)', category: 'CRYPTO', exchange: 'CRYPTO', ltp: 142.35, change_amount: -1.80, change_percent: -1.25, trading_hours: '24x7', trading_days: 'All 7 Days', currency_symbol: '$' }
-    ]);
-
-    // Positions (Pages 17, 19)
-    await Position.bulkCreate([
-      { userId: demoUser.id, symbol: 'NIFTY 12 SEP 25000 CE', exchange: 'NFO', side: 'BUY', quantity: 50, avg_price: 102.50, ltp: 128.30, pnl_amount: 12900.0, pnl_percent: 25.17, is_algo: true, is_open: true },
-      { userId: demoUser.id, symbol: 'BANKNIFTY 12 SEP 51300 PE', exchange: 'NFO', side: 'SELL', quantity: 25, avg_price: 215.00, ltp: 198.40, pnl_amount: -4150.0, pnl_percent: -7.72, is_algo: true, is_open: true },
-      { userId: demoUser.id, symbol: 'RELIANCE', exchange: 'NSE', side: 'BUY', quantity: 100, avg_price: 2856.00, ltp: 2914.75, pnl_amount: 5875.0, pnl_percent: 2.06, is_algo: true, is_open: true },
-      { userId: demoUser.id, symbol: 'GOLD OCT FUT', exchange: 'MCX', side: 'BUY', quantity: 10, avg_price: 72450.0, ltp: 72612.0, pnl_amount: 1620.0, pnl_percent: 0.22, is_algo: true, is_open: true },
-      { userId: demoUser.id, symbol: 'BTC/USDT', exchange: 'CRYPTO', side: 'BUY', quantity: 1, avg_price: 58210.0, ltp: 58450.0, pnl_amount: 620.0, pnl_percent: 0.41, is_algo: true, is_open: true }
-    ]);
-
-    // Transactions / Withdrawals (Page 23)
-    await Transaction.bulkCreate([
-      { userId: demoUser.id, txn_id: 'TRW12345678', type: 'WITHDRAWAL', amount: 50000.0, bank_name: 'HDFC Bank', account_masked: '**** 4567', ifsc_code: 'HDFC0001234', status: 'Processing', expected_time: 'Within 1-4 hours' },
-      { userId: demoUser.id, txn_id: 'TRW12345677', type: 'WITHDRAWAL', amount: 25000.0, bank_name: 'ICICI Bank', account_masked: '**** 8901', ifsc_code: 'ICIC0008901', status: 'Completed', expected_time: 'Completed' },
-      { userId: demoUser.id, txn_id: 'TRW12345676', type: 'WITHDRAWAL', amount: 15000.0, bank_name: 'HDFC Bank', account_masked: '**** 4567', ifsc_code: 'HDFC0001234', status: 'Completed', expected_time: 'Completed' },
-      { userId: demoUser.id, txn_id: 'TRW12345675', type: 'WITHDRAWAL', amount: 10000.0, bank_name: 'SBI Bank', account_masked: '**** 2233', ifsc_code: 'SBIN0002233', status: 'Failed', expected_time: 'Failed' },
-      { userId: demoUser.id, txn_id: 'TRW12345674', type: 'WITHDRAWAL', amount: 40000.0, bank_name: 'HDFC Bank', account_masked: '**** 4567', ifsc_code: 'HDFC0001234', status: 'Completed', expected_time: 'Completed' }
-    ]);
-
-    // Referral Records (Page 18)
-    await ReferralRecord.bulkCreate([
-      { userId: demoUser.id, referee_name: 'Anil R', status: 'Active', joined_date: '12 Aug 2024', total_trades: 156, total_profit: 86400.0, earned_amount: 4320.0 },
-      { userId: demoUser.id, referee_name: 'Priya K', status: 'Active', joined_date: '28 Sep 2024', total_trades: 98, total_profit: 57000.0, earned_amount: 2850.0 },
-      { userId: demoUser.id, referee_name: 'Rahul S', status: 'Active', joined_date: '14 Jan 2025', total_trades: 64, total_profit: 35600.0, earned_amount: 1780.0 },
-      { userId: demoUser.id, referee_name: 'Meera T', status: 'Active', joined_date: '03 Feb 2025', total_trades: 42, total_profit: 25000.0, earned_amount: 1250.0 }
-    ]);
-
-    // Login History (Page 24)
-    await LoginHistory.bulkCreate([
-      { userId: demoUser.id, ip_address: '192.168.1.45', device_name: 'iPhone 15 Pro Max', location: 'Mumbai, India', auth_method: 'PIN' },
-      { userId: demoUser.id, ip_address: '192.168.1.45', device_name: 'iPhone 15 Pro Max', location: 'Mumbai, India', auth_method: 'Fingerprint' },
-      { userId: demoUser.id, ip_address: '103.22.45.12', device_name: 'MacBook Pro Chrome', location: 'Mumbai, India', auth_method: 'Password' }
-    ]);
-
-    // Notifications (Page 22)
-    await Notification.bulkCreate([
-      { userId: demoUser.id, category: 'Trading', title: 'Order Executed', message: 'NIFTY 12 SEP 25000 CE • BUY 50 @ ₹128.30. Your order has been fully executed.', is_read: false, time_ago: 'Today at 09:22 AM' },
-      { userId: demoUser.id, category: 'Trading', title: 'Algo Trade Executed', message: 'BANKNIFTY 12 SEP 51300 PE • SELL 25 @ ₹198.40. Executed by Algo Strategy (Balanced).', is_read: false, time_ago: 'Today at 09:18 AM' },
-      { userId: demoUser.id, category: 'Trading', title: 'Position Closed', message: 'RELIANCE • SELL 100 @ ₹2,914.75. Position closed. P&L: +₹5,875.', is_read: false, time_ago: 'Today at 09:45 AM' },
-      { userId: demoUser.id, category: 'Funds', title: 'Withdrawal Requested', message: 'Withdrawal request of ₹50,000 to HDFC Bank is currently processing.', is_read: false, time_ago: 'Today at 02:35 PM' },
-      { userId: demoUser.id, category: 'Important', title: 'Algo Strategy Summary', message: 'Total trades today: 8 | Net P&L: +₹18,420 | Win rate: 75%.', is_read: true, time_ago: 'Yesterday at 04:15 PM' }
     ]);
 
     // Research Calls & News (Page 25)
@@ -156,7 +214,7 @@ async function seedDatabase() {
       { title: 'Crude oil slips below $72 on global supply concerns', snippet: 'Brent crude falls 1.8% as OPEC signals higher output in coming months.', source: 'Reuters', sentiment: 'Negative', time_ago: '2 hours ago' }
     ]);
 
-    console.log('[Seed] Database successfully seeded with demo user and sample market data!');
+    console.log('[Seed] Database successfully seeded with 5 dummy users and complete sample market data!');
   } catch (err) {
     console.error('[Seed Error]', err);
   }
